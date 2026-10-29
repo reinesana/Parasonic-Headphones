@@ -1,6 +1,6 @@
 # Music Display Headphones
 
-<img src="images/headphones.gif" alt="Clip-on headphones with a round screen on each ear playing a music video" width="500">
+<img src="images/headphones.jpg" alt="Clip-on headphones with a round screen on each ear playing a music video" width="500">
 
 A pair of 2000s clip-on headphones with a small round screen on each ear that loops a short music video clip. Each ear has its own ESP32-S3 board with a built-in 1.28" display and its own battery, stuck to the back of the earcup. The headphones still work as normal headphones; the screens are purely for show.
 
@@ -163,4 +163,4 @@ because the two boards are mirrored on your head, one of them will usually be up
 | `firmware/HeadphoneScreen/HeadphoneScreen.ino` | The firmware: loops a clip, tap to switch |
 | `firmware/HeadphoneScreen/partitions.csv` | Flash layout (15 MB for the sketch + clips) |
 | `firmware/HeadphoneScreen/video_*.h` | Generated clips, made by the converter |
-| `images/` | The GIF shown at the top |
+| `images/` | The photo shown at the top |
