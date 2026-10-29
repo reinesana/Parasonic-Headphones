@@ -1,4 +1,4 @@
-# Music Display Headphones
+# Parasonic Display Headphones
 
 <img src="images/headphones.jpg" alt="Clip-on headphones with a round screen on each ear playing a music video" width="500">
 
