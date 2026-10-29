@@ -1,144 +1,60 @@
-MUSIC DISPLAY HEADPHONES
-========================
-Clip-on headphones with a small round screen on each ear that loops a
-short video clip of your choice. Each ear is an independent unit
-(board + battery); the headphone audio wiring is never touched.
+# Music Display Headphones
 
-Two pieces of software, two different places:
+<img src="images/headphones.gif" alt="Clip-on headphones with a round screen on each ear playing a music video" width="500">
 
-  convert_video.py   runs on your COMPUTER (Python + ffmpeg).
-                         Turns any mp4 into a short 240x240 clip and
-                         writes it out as a C header the sketch includes.
+A pair of 2000s clip-on headphones with a small round screen on each ear that loops a short music video clip. Each ear has its own ESP32-S3 board with a built-in 1.28" display and its own battery, stuck to the back of the earcup. The headphones still work as normal headphones; the screens are purely for show.
 
-  HeadphoneScreen_v3/    runs on the BOARD (Arduino). Loops the clip,
-                         tap the screen to switch between the two clips.
+The clips are stored on the boards, so there is no SD card, Wi-Fi or laptop needed once they're uploaded. Tap a screen to switch between the two clips.
 
+| What happens | On the screen |
+| --- | --- |
+| Power on (plug in battery) | Clip starts looping |
+| Tap the screen (or press BOOT) | Switches to the other clip |
+| Plug in USB-C | Keeps playing while the battery charges |
 
-FOLDER LAYOUT
--------------
-  README.txt                         this guide
-  convert_video.py               mp4 -> video_left.h / video_right.h
-  videos/                            put your source mp4s here
-  firmware/HeadphoneScreen/
-      HeadphoneScreen.ino            the Arduino sketch (open this)
-      partitions.csv                 flash layout (leave as is)
-      video_left.h, video_right.h    generated clips - do not edit
-  HeadphoneScreen_Adela/, _Hootie/, _v2/   old LittleFS versions, ignore
+## Equipment
 
+- 2 × Waveshare **ESP32-S3-Touch-LCD-1.28** (round 240×240 touch display, 16MB flash, 2MB PSRAM). The non-touch **ESP32-S3-LCD-1.28** also works, see [Touch vs non-touch](#touch-vs-non-touch)
+- 1 × pair of clip-on headphones with a flat earcup back about 38 mm across (built on the Panasonic RP-HZ47)
+- 2 × 3.7V LiPo battery, ~300 mAh, with protection circuit and **MX1.25 2-pin** plug
+- 3M VHB double-sided foam tape
+- Electrical tape
+- USB-C **data** cable
+- A computer with Arduino IDE 2, Python 3 and ffmpeg
 
-PARTS
------
-- 2x Waveshare ESP32-S3-Touch-LCD-1.28 (or ESP32-S3-LCD-1.28, non-touch)
-  240x240 round IPS, GC9A01, 16MB flash, 2MB PSRAM, USB-C, MX1.25
-  battery socket with onboard charger.
-- 1x pair of clip-on headphones with a flat earcup back, ~38 mm across
-  (built on Panasonic RP-HZ47; anything similar works)
-- 2x 3.7V LiPo ~300mAh, protected, MX1.25 2-pin plug
-- 3M VHB foam tape, electrical tape
-- USB-C DATA cable
-- Computer: Arduino IDE 2, Python 3, ffmpeg
+## Quick start
 
+1. **Install the ESP32 boards in the Arduino IDE.** Go to *Settings*, add `https://espressif.github.io/arduino-esp32/package_esp32_index.json` to *Additional boards manager URLs*, then install **esp32 by Espressif Systems** (3.x) in the Boards Manager.
+2. **Install the libraries.** In the Library Manager, install **GFX Library for Arduino** (by moononournation) and **JPEGDEC** (by Larry Bank).
+3. **Install ffmpeg.** macOS `brew install ffmpeg`, Windows `winget install ffmpeg`, Linux `sudo apt install ffmpeg`.
+4. **Make your clips.** Drop your videos in `videos/`, then run the converter once per ear:
+   ```bash
+   python3 convert_video.py videos/song.mp4  left  --start 42 --seconds 10
+   python3 convert_video.py videos/other.mp4 right --start 10 --seconds 10
+   ```
+   This writes `firmware/HeadphoneScreen/video_left.h` and `video_right.h`.
+5. **Set the board options.** Open `firmware/HeadphoneScreen/HeadphoneScreen.ino`, select **ESP32S3 Dev Module** and your USB port, then in *Tools*: Flash Size **16MB (128Mb)**, Partition Scheme **Custom**, PSRAM **QSPI PSRAM**, USB CDC On Boot **Enabled**, Upload Speed **921600**.
+6. **Upload to the first board.** At the top of the sketch set `START_VIDEO 0`, click Upload (compiling takes a minute or two, the clips are big), press RST.
+7. **Upload to the second board** with `START_VIDEO 1`.
+8. **Plug in the batteries** (check polarity first, see below) and stick everything to the headphones.
 
-SOFTWARE SETUP (once)
----------------------
-1. Arduino IDE 2: https://www.arduino.cc/en/software
-2. File > Preferences > Additional boards manager URLs:
-     https://espressif.github.io/arduino-esp32/package_esp32_index.json
-   Boards Manager > install "esp32" by Espressif (3.x).
-3. Library Manager > install
-     "GFX Library for Arduino"  (Moon On Our Nation)
-     "JPEGDEC"                  (Larry Bank)
-4. ffmpeg:  macOS  brew install ffmpeg
-            Windows winget install ffmpeg
-            Linux   sudo apt install ffmpeg
+## Converting clips
 
+`convert_video.py` runs on your computer. It centre-crops the video to a square, scales it to 240×240, encodes it as 20 fps MJPEG and writes the frames into a C header the sketch includes.
 
-STEP 1 - MAKE YOUR CLIPS
-------------------------
-Copy your videos into videos/, then from the HeadphoneScreens folder:
+| Option | What it does |
+| --- | --- |
+| `left` / `right` | Which ear the clip is for |
+| `--start N` | Begin N seconds into the video (e.g. the chorus) |
+| `--seconds N` | Clip length. 10–15 s per ear is a good target |
+| `--fps 20` | Frame rate (default 20) |
+| `--quality 6` | 2 = best and largest … 10 = smallest (default 6) |
 
-  python3 convert_video.py videos/song.mp4  left  --seconds 10
-  python3 convert_video.py videos/other.mp4 right --seconds 10
+Both clips together need to fit in about 14 MB, which works out to roughly 0.5 MB per second of video in total. The script prints the size when it finishes. The same clip can go on both ears, just run it twice.
 
-Options
-  --start N     begin N seconds into the video (e.g. the chorus)
-  --seconds N   clip length (10-15 s per ear is a good target)
-  --fps 20      frame rate (default 20)
-  --quality 6   2 = best / largest ... 10 = smallest (default 6)
+## Layout
 
-What it does: centre-crops to a square, scales to 240x240, encodes
-baseline MJPEG, and writes firmware/HeadphoneScreen/
-video_left.h or video_right.h. It prints the length and size.
-
-Limits: a frame over 60 KB is rejected -> rerun with --quality 8 or 10.
-Both clips together must fit in ~14 MB (about 0.5 MB per second total).
-The same clip can go on both ears; just run it twice with left and right.
-
-
-STEP 2 - ARDUINO IDE SETTINGS (Tools menu)
-------------------------------------------
-  Board:             ESP32S3 Dev Module
-  Flash Size:        16MB (128Mb)
-  Partition Scheme:  Custom            <- uses partitions.csv in the folder
-  PSRAM:             QSPI PSRAM
-  USB CDC On Boot:   Enabled
-  Upload Speed:      921600
-  Port:              the one that appears when you plug the board in
-                     (macOS /dev/cu.usbmodem*, Windows COMx)
-
-
-STEP 3 - PER-BOARD SETTINGS (top of HeadphoneScreen.ino)
---------------------------------------------------------
-  TOUCH_VERSION  1 = touch board, 0 = non-touch board
-  START_VIDEO    0 = start on the left clip, 1 = start on the right clip
-  ROTATION       0-3 in 90-degree steps so the video is upright once
-                 mounted with USB-C facing down (usually 0 on one ear and
-                 2 on the other, because the boards are mirrored)
-  BRIGHTNESS     255 default; ~150 if it blows out on camera / for battery
-  SPI_SPEED      80000000; drop to 40000000 if you see stripes
-
-Touch vs non-touch - what actually differs:
-  Signal        Touch-LCD-1.28   LCD-1.28 (non-touch)
-  SCK/MOSI/CS/DC   10/11/9/8        same
-  LCD_MISO         12               none
-  LCD_RST          14               12
-  Backlight        2                40
-  Touch I2C        SDA 6, SCL 7, INT 5, RST 13   (no touch chip)
-The touch board has a second thin ribbon from the glass to the PCB.
-Wrong TOUCH_VERSION = black screen.
-
-
-STEP 4 - UPLOAD
----------------
-Open firmware/HeadphoneScreen/HeadphoneScreen.ino, plug in the
-board, click Upload. Compile takes 1-2 min (the clips are big), upload
-about 1 min. Press RST - the clip loops. Tap the screen (or press BOOT)
-to switch between the two clips.
-If upload won't start: hold BOOT, tap RST, release BOOT, Upload again.
-Repeat for the second board with its own START_VIDEO / ROTATION.
-
-
-STEP 5 - BATTERY
-----------------
-  !! Check polarity before plugging in. The MX1.25 socket is NOT
-  !! standardised. Find the + / - marks beside the socket on the board
-  !! and make sure the RED wire lands on +. If reversed, lift the tiny
-  !! metal tab inside the plug with a pin, pull the wires out, swap them.
-
-With USB unplugged, connect the battery: the screen should come on.
-Plug USB-C back in: the onboard charger charges the LiPo.
-Runtime at full brightness is roughly 1.5-2 h per 300 mAh cell; lower
-BRIGHTNESS to stretch it. There is no power switch: unplug the battery
-or let it drain.
-
-
-STEP 6 - ASSEMBLY
------------------
-Dry-fit everything with masking tape first (set ROTATION, check lead
-lengths). VHB cannot be repositioned once pressed down.
-
-Side view of one ear, seen from outside:
-
+```
                      clip hanger (stock, rotating)
                             +----------+
                             |          |   <- hooks over the ear
@@ -157,60 +73,94 @@ Side view of one ear, seen from outside:
                           USB-C port facing DOWN
                                  |
                     headphone audio cable (untouched)
+```
 
-Layer stack, from the ear outward:
+Layer stack from the ear outward:
 
-  YOUR EAR
-   |
-   v
-  [ foam earpad ]                 1. stock
-  [ driver + plastic back shell ] 2. stock
-  [===== VHB foam tape =========] 3. full disc, cut to the shell
-  [ LiPo, taped in elec. tape   ] 4. flat side down, leads toward USB edge
-  [===== VHB (small pieces) ====] 5. leave the MX1.25 socket area clear
-  [ back of board, elec. tape   ] 6. cover ESP32 module, header, socket
-  [ PCB                         ] 7.
-  [ round LCD glass             ] 8. faces outward - do NOT tape over it
-   OUTSIDE
+| Layer | Notes |
+| --- | --- |
+| Foam earpad | Stock |
+| Driver + plastic back shell | Stock |
+| VHB foam tape | Full disc, cut to the shell |
+| LiPo battery | Wrapped in electrical tape, flat side down, lead toward the USB-C edge |
+| VHB foam tape | Small pieces, leave the battery socket clear |
+| Back of the board | Electrical tape over the ESP32 module, header pins and socket |
+| Board + round screen | Glass faces outward, nothing taped over it |
 
-Added per ear: ~13 mm thickness, ~17 g (board ~10 g + battery ~7 g).
-The ~36 mm board sits on a ~38 mm earpad, so the cup looks like it IS
-the screen.
+Adds about 13 mm of thickness and 17 g per ear (board ~10 g, battery ~7 g). The 36 mm board sits on a 38 mm earpad, so the cup looks like it *is* the screen.
 
-Order of work per ear:
-  a. Insulate the back of the board with electrical tape (all exposed
-     metal), leaving the MX1.25 socket reachable.
-  b. Wrap the battery in electrical tape. Plug it in with a small slack
-     loop in the lead - never stretched, never pinched between layers.
-  c. Stick battery to board back with small VHB pieces.
-  d. Cut a VHB disc for the earcup back shell, stick the battery side of
-     the stack onto it, USB-C pointing down toward the cable.
-  e. Put them on, check the video is upright; if not, change ROTATION
-     and re-upload (USB-C is still reachable).
+## the build process
 
-Wiring - there is almost none:
-  LiPo  --(MX1.25, red to +)--> board battery socket
-  USB-C -------------------->  board (upload + charging)
-  Audio cable --------------->  driver (stock, separate circuit)
+Here's the process of how to build this on your own.
 
+### step 1: pick the right pins
 
-KNOWN TRADE-OFF
----------------
-Light clip-ons are built for ~11 g per side; this adds ~17 g cantilevered
-outward, so expect a slight tilt. Fixes if needed: move the battery to
-the inside of the clip hanger (weight closer to the head), or a dab of
-hot glue at the hanger pivot to stiffen it.
+the Waveshare board has the screen, touch and battery charger already wired up, so there's nothing to solder. the only thing the sketch needs to know is which version you have, because two pins differ.
 
+#### touch vs non-touch
 
-TROUBLESHOOTING
----------------
-- Black screen: TOUCH_VERSION wrong, then check backlight pin.
-- Video sideways/upside down: change ROTATION, re-upload.
-- Stripes / glitches: SPI_SPEED 40000000.
-- Tap does nothing: press BOOT instead; on non-touch boards only BOOT works.
-- Upload won't start: hold BOOT, tap RST, release BOOT, retry.
-- "largest frame is N bytes" from the script: --quality 8 (or 10).
-- Firmware too big: shorten clips with --seconds or raise --quality.
-- "ffmpeg: command not found": install ffmpeg (Software Setup, step 4).
-- Board won't power from battery: polarity (Step 5) or empty cell -
-  charge over USB first.
+| Signal | Touch-LCD-1.28 | LCD-1.28 (non-touch) |
+| --- | --- | --- |
+| SCK / MOSI / CS / DC | 10 / 11 / 9 / 8 | same |
+| LCD MISO | 12 | none |
+| LCD RST | **14** | **12** |
+| Backlight | **2** | **40** |
+| Touch SDA / SCL / INT / RST | 6 / 7 / 5 / 13 | no touch chip |
+| Battery voltage (ADC) | 1 | 1 |
+
+set `TOUCH_VERSION` at the top of the sketch to `1` for touch or `0` for non-touch. the touch board has a second thin ribbon cable from the glass to the PCB. on the non-touch board the BOOT button switches clips instead of tapping.
+
+### step 2: make the clips
+
+pick a 10–15 second section of each video and run `convert_video.py` for `left` and `right`. the frames are stored as plain JPEGs in `video_left.h` and `video_right.h`, and the sketch decodes them one by one with JPEGDEC straight out of flash, so there's no SD card.
+
+### step 3: upload
+
+open `firmware/HeadphoneScreen/HeadphoneScreen.ino`. the `partitions.csv` in the same folder gives the sketch a 15 MB app partition, which is why *Partition Scheme* has to be **Custom**. set `START_VIDEO` to `0` for the left board and `1` for the right, then upload each one. if the upload won't connect, hold **BOOT**, tap **RST**, release **BOOT** and try again.
+
+### step 4: battery
+
+> **Check the polarity before plugging in.** The MX1.25 socket is not standardised. Look for the **+** and **−** marks next to the socket on the board and make sure the **red** wire goes to **+**. If it's backwards, lift the tiny metal tab inside the plug with a pin, pull the wires out and swap them.
+
+with USB unplugged, connect the battery and the screen should come on. plug USB-C back in and the onboard charger tops it up. expect roughly 1.5–2 hours per charge at full brightness; lower `BRIGHTNESS` to stretch it. there's no power switch, so unplug the battery to turn it off.
+
+### step 5: mount it
+
+dry-fit everything with masking tape first. VHB can't be repositioned once it's pressed down.
+
+1. put electrical tape over the back of the board (all exposed metal), leaving the battery socket reachable
+2. wrap the battery in electrical tape and plug it in with a little slack in the lead, never stretched or pinched
+3. stick the battery to the back of the board with small pieces of VHB
+4. cut a VHB disc for the earcup back shell and press the stack on, USB-C pointing down toward the headphone cable
+5. put them on and check the video is upright
+
+### step 6: rotation
+
+because the two boards are mirrored on your head, one of them will usually be upside down. change `ROTATION` at the top of that board's sketch (`0`–`3`, 90° steps, typically `0` on one ear and `2` on the other) and re-upload. the USB-C port is still reachable once mounted.
+
+## Tuning and troubleshooting
+
+| Problem | Try this |
+| --- | --- |
+| Black screen | Check `TOUCH_VERSION` matches your board |
+| Video sideways or upside down | Change `ROTATION` (0–3) and re-upload |
+| Stripes or glitches in the picture | Change `SPI_SPEED` to `40000000` |
+| Too bright on camera / short battery life | Lower `BRIGHTNESS` (e.g. `150`) |
+| Tap does nothing | Press BOOT instead; non-touch boards only have BOOT |
+| Upload fails to connect | Hold BOOT, tap RST, release BOOT, upload again |
+| `largest frame is N bytes` from the converter | Rerun with `--quality 8` or `10` |
+| Sketch too big | Shorten clips with `--seconds` or raise `--quality` |
+| `ffmpeg: command not found` | Install ffmpeg (Quick start step 3) |
+| Board won't run from battery | Check polarity (step 4), or charge it over USB first |
+| Headphones tilt outward | Move the battery to the inside of the clip hanger, or a dab of hot glue at the hanger pivot |
+
+## Files
+
+| Path | What it is |
+| --- | --- |
+| `convert_video.py` | Turns an mp4 into `video_left.h` / `video_right.h` |
+| `videos/` | Put your source videos here |
+| `firmware/HeadphoneScreen/HeadphoneScreen.ino` | The firmware: loops a clip, tap to switch |
+| `firmware/HeadphoneScreen/partitions.csv` | Flash layout (15 MB for the sketch + clips) |
+| `firmware/HeadphoneScreen/video_*.h` | Generated clips, made by the converter |
+| `images/` | The GIF shown at the top |

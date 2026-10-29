@@ -1,12 +1,12 @@
 #!/usr/bin/env python3
-"""Convert an mp4 (or any video) into a video_<name>.h header for HeadphoneScreen_v3.
+"""Convert an mp4 (or any video) into a video_<name>.h header for the HeadphoneScreen firmware.
 
 Usage:
     python3 convert_video.py videos/song.mp4 left  [--fps 20] [--quality 6] [--seconds 10]
     python3 convert_video.py videos/other.mp4 right --start 30 --seconds 12
 
 Drop your source videos in the videos/ folder. Writes video_<name>.h into
-HeadphoneScreen_v3/HeadphoneScreen/ with <name>_frames, <name>_offsets[], <name>_data[].
+firmware/HeadphoneScreen/ with <name>_frames, <name>_offsets[], <name>_data[].
 The sketch expects the names "left" and "right".
 Needs ffmpeg on PATH (brew install ffmpeg).
 """
