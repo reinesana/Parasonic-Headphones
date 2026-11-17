@@ -3,3 +3,7 @@ videos/*
 !videos/README.txt
 __pycache__/
 .DS_Store
+server/.env
+server/.venv/
+server/clips/
+server/.spotify_cache
