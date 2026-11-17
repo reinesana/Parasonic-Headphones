@@ -22,7 +22,7 @@ The clips are stored on the boards, so there is no SD card, Wi-Fi or laptop need
 - USB-C **data** cable
 - A computer with Arduino IDE 2, Python 3 and ffmpeg
 
-## Cost and parts links
+## Equitment Shopping List
 
 | Part | Qty | Price | Link |
 | --- | --- | --- | --- |
