@@ -22,6 +22,17 @@ The clips are stored on the boards, so there is no SD card, Wi-Fi or laptop need
 - USB-C **data** cable
 - A computer with Arduino IDE 2, Python 3 and ffmpeg
 
+## Cost and parts links
+
+| Part | Qty | Price | Link |
+| --- | --- | --- | --- |
+| Panasonic RP-HZ47 clip-on headphones | 1 | $16 | [Amazon](https://www.amazon.ca/dp/B000GH2QYK) |
+| Waveshare ESP32-S3-LCD-1.28 round display (non-touch) | 2 | $15 each ($30) | [Waveshare](https://www.waveshare.com/esp32-s3-lcd-1.28.htm) |
+| 3.7V LiPo batteries | 2-pack | $15 | [Amazon](https://www.amazon.ca/dp/B08FD3V6TF) |
+| **Total** | | **$61** | |
+
+> **Note:** these are the prices I paid. Prices can differ depending on when and where you buy, so check the links for the current price. The [touch version](https://www.waveshare.com/esp32-s3-touch-lcd-1.28.htm) of the display costs a few dollars more.
+
 ## Quick start
 
 1. **Install the ESP32 boards in the Arduino IDE.** Go to *Settings*, add `https://espressif.github.io/arduino-esp32/package_esp32_index.json` to *Additional boards manager URLs*, then install **esp32 by Espressif Systems** (3.x) in the Boards Manager.
